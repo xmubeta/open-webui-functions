@@ -44,13 +44,13 @@ class Pipe:
             {"id": self.valves.CHAT_BOT_ID, "name": self.valves.CHAT_BOT_NAME},
         ]
 
-    def pipe(self, body: dict, __user__: dict):
+    async def pipe(self, body: dict, __user__: dict):
         api_key = self.valves.API_KEY
 
         # Get the latest message
         messages = body.get("messages", [])
         if not messages:
-            return "Error: No messages provided"
+            yield "Error: No messages provided"
 
         user_message = messages[-1].get("content", "")
 
@@ -101,6 +101,7 @@ class Pipe:
                     try:
                         # Remove 'data: ' prefix and parse JSON
                         line_text = line.decode("utf-8")
+                        print(line_text)
                         if line_text.startswith("data: "):
                             json_data = json.loads(line_text.replace("data: ", ""))
 
@@ -119,12 +120,13 @@ class Pipe:
                             if event_type == "message":
                                 # Process text chunks from LLM and return immediately
                                 answer = json_data.get("answer", "")
-                                if answer:
-                                    yield answer
+                                # if answer:
+                                #    yield answer
 
                             elif event_type == "workflow_finished":
                                 # Return conversation_id for future reference when finished
-                                yield f"\n\n[CONVID:{extracted_conversation_id}]"
+                                yield json_data.get("data").get("outputs").get("answer")
+                                # yield f"\n\n[CONVID:{extracted_conversation_id}]"
 
                     except json.JSONDecodeError as e:
                         print(f"Failed to parse JSON: {line} - Error: {e}")
